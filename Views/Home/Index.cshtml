@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <img id="captchaImage" src="" alt="Captcha Image" />
+    <input type="text" id="captchaInput" placeholder="Enter the captcha code" />
+    <button id="validateButton">Validate</button>
+    <div id="resultMessage"></div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var guid = generateUUIDv4();
+        // 加载验证码图片
+        loadCaptcha();
+
+        // 监听验证按钮点击事件
+        document.getElementById('validateButton').addEventListener('click', validateCaptcha);
+        // 点击图片刷新验证码
+        document.getElementById('captchaImage').addEventListener('click', captchaImageClick);
+
+        async function captchaImageClick() {
+            //刷新GUID
+            guid = generateUUIDv4();
+            // 重新加载验证码
+            loadCaptcha();
+        } 
+        async function loadCaptcha() {
+            try {
+                const response = await fetch('/home/Captcha?id=' + guid);
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                document.getElementById('captchaImage').src = imageUrl;
+            } catch (error) {
+                console.error('Failed to load captcha:', error);
+            }
+        } 
+        async function validateCaptcha() {
+            const input = document.getElementById('captchaInput').value;
+            const response = await fetch('/home/Validate?id=' + guid + "&code=" + input);
+
+            const data = await response.json();
+            const messageElement = document.getElementById('resultMessage');
+
+            if (data) {
+                messageElement.textContent = 'Captcha is correct!';
+                messageElement.style.color = 'green';
+            } else {
+                messageElement.textContent = 'Incorrect captcha. Please try again.';
+                messageElement.style.color = 'red';
+                //刷新GUID
+                guid = generateUUIDv4();
+                // 重新加载验证码
+                loadCaptcha();
+            }
+        } 
+        function generateUUIDv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+    }); 
+</script>
