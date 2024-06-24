@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+    stages {
+        stage('pull code') {
+            steps {
+                git credentialsId: 'maoyuan', url: 'https://github.com/maoyuan6/verificationcode.git' 
+            }
+        }
+        stage('build project') {
+            steps {
+               echo 'build project'
+               sh 'docker build -f ./Dockerfile -t verificationcode:verificationcode .' 
+               sh 'docker stop verificationcode || true' 
+               sh 'docker rm -f verificationcode || true' 
+            }
+        }
+        stage('publish') {
+            steps {
+                echo 'publish'
+                sh 'docker run -d -p 8500:80  --name verificationcode verificationcode:verificationcode'
+            }
+        }
+    }
+}
